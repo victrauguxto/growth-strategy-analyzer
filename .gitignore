@@ -1,0 +1,5 @@
+docs/
+data/*.csv
+.env
+data/processed/
+utils/__pycache__/
