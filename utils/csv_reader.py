@@ -42,7 +42,11 @@ def load_and_process_dataset(file_path: str) -> pd.DataFrame:
     df["valor_liquido"] = df["comissao"] - df["cashback"]
     df["percentual_comissao"] = (df["comissao"] / df["vendas_totais"] * 100).round(2)
     df["percentual_cashback"] = (df["cashback"] / df["vendas_totais"] * 100).round(2)
+    df["margem_direta"] = (df["valor_liquido"] / df["vendas_totais"] * 100).round(2)
+    
+    custo_por_comprador =(max(df["cashback"]) - min(df["cashback"])) / (max(df["compradores"]) - min(df["compradores"]))  
 
+    print(f"custo por comprador: {custo_por_comprador}")
     return df   
 
 
