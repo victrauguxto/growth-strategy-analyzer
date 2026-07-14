@@ -3,3 +3,5 @@ data/*.csv
 .env
 data/processed/
 utils/__pycache__/
+report/report.html
+.gitignore
