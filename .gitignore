@@ -5,3 +5,4 @@ data/processed/
 utils/__pycache__/
 report/report.html
 .gitignore
+reports/
