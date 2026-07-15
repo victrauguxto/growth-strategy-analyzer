@@ -124,7 +124,7 @@ Os valores monetários devem seguir o padrão brasileiro aceito pelo projeto, co
 
 ### 2. Configure o registro dos resultados
 
-A forma recomendada de usar o projeto é registrar cada análise diretamente no Google Sheets. O arquivo `.env.example` já contém o link da planilha original de acompanhamento. Para habilitar a integração, basta fornecer uma chave JSON de Service Account com acesso de edição a essa planilha e configurar o caminho da chave no `.env`.
+A forma recomendada de usar o projeto é registrar cada análise diretamente no Google Sheets. O arquivo `.env.example` já contém o link da planilha original de acompanhamento, que pode ser acessado em: https://docs.google.com/spreadsheets/d/1zpI995GmocupeSbYQv2i5GeHXnf2U1fyVpIWSK7aPVM/edit?usp=sharing. Para habilitar a integração, basta fornecer uma chave JSON de Service Account com acesso de edição a essa planilha e configurar o caminho da chave no `.env`.
 
 Independentemente da integração, cada análise também é adicionada ao histórico local `data/test_results/test_results.csv`.
 

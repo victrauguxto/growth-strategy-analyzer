@@ -9,3 +9,4 @@ reports/
 credentials/
 *.json
 *.csv
+tests/
