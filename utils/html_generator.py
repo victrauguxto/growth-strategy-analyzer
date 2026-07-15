@@ -1178,4 +1178,4 @@ def generate_html_report(
         f"{output_file.resolve()}"
     )
 
-    return recommendation
+    return recommendation, quantidade_grupos
