@@ -6,3 +6,7 @@ utils/__pycache__/
 report/report.html
 .gitignore
 reports/
+credentials/
+*.json
+*.csv
+output/

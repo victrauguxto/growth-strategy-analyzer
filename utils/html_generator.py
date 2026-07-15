@@ -1177,3 +1177,5 @@ def generate_html_report(
         f"Relatório gerado em: "
         f"{output_file.resolve()}"
     )
+
+    return recommendation

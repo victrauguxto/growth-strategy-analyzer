@@ -2,35 +2,11 @@ import pandas
 import pandas
 from importlib import resources
 import pandas as pd
-from pydantic import BaseModel, field_validator
 from typing import List
 from pathlib import Path
 import json
 
 
-class dataset(BaseModel):
-    data: str
-    grupos_de_usuarios: str
-    parceiro: str
-    compradores: int
-    comissao: float
-    cashback: float
-    vendas_totais: float
-    
-## indicadores:
-"""
-Crescimento:  Vendas totais
-Crescimento:  Compradores
-Monetização:  Comissão
-Custo do incentivo:  Cashback
-Rentabilidade:  Comissão - Cashback
-Rentabilidade:  Margem direta
-Eficiência:  Resultado por comprador
-Eficiência:  GMV incremental por cashback adicional
-Confiança:  Consistência diária
-Confiança:  Intervalo de confiança
-
-"""
 
 def read_csv(file_path: str) -> pd.DataFrame:
     """Read a CSV file and return a Pandas DataFrame."""
@@ -60,7 +36,10 @@ def load_and_process_dataset(file_path: str) -> pd.DataFrame:
     df["percentual_cashback"] = (df["cashback"] / df["vendas_totais"] * 100).round(2)
     df["margem_direta"] = (df["valor_liquido"] / df["vendas_totais"] * 100).round(2)
 
-    return df 
+    inicio = min(df["data"]).date()
+    fim = max(df["data"]).date()
+
+    return df, inicio, fim
 
 def create_analytical_df(df):
     analytical_df = df.copy()
@@ -100,12 +79,9 @@ def extract_kpis(df):
 
 
 
-def process_all_datasets(
-    input_folder: str = "data",
-    output_folder: str = "data/processed",
-) -> None:
-    input_path = Path(input_folder)
-    output_path = Path(output_folder)
+def process_all_datasets() -> None:
+    input_path = Path("input")
+    output_path = Path("output")
 
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -124,7 +100,7 @@ def process_all_datasets(
     for file_path in files:
         print("-" * 80)
         try:
-            df = load_and_process_dataset(file_path)
+            df, inicio, fim = load_and_process_dataset(file_path)
 
             processed_file_path = (
                 output_path / f"{file_path.stem}_processed.csv"
@@ -157,5 +133,6 @@ def process_all_datasets(
         f"Finished. Successfully processed "
         f"{processed_count} of {len(files)} files."
     )
+    return kpis, inicio, fim, file_path
 
 
