@@ -225,12 +225,7 @@ def _result(
 
 
 def analyze_growth_tradeoff(kpis: dict) -> dict:
-    """Recommend a cashback variant using explicit deterministic rules.
 
-    Buyers represent observed customer response. This engine does not infer
-    conversion because the datasets contain neither exposed users nor traffic
-    allocation. No statistical significance is calculated.
-    """
     normalized = _normalize_kpis(kpis)
     if len(normalized) < 2:
         return _result(
