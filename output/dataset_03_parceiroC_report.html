@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Teste A/B - Parceiro C</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f4f6f8; color: #1f2937; line-height: 1.55; }
+        .container { max-width: 1160px; margin: 0 auto; padding: 40px 24px 80px; }
+        .report-header { margin-bottom: 24px; }
+        .report-header h1 { margin: 0 0 6px; color: #111827; font-size: 32px; }
+        .subtitle { margin: 0; color: #64748b; }
+        .report-info, .decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-top: 22px; }
+        .info-item, .decision-item { background: #fff; padding: 16px; border: 1px solid #e5e7eb; border-radius: 10px; }
+        .info-label, .metric-label { display: block; margin-bottom: 5px; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+        .info-value, .metric-value { color: #111827; font-weight: 700; }
+        section { margin-bottom: 28px; }
+        .section-box { background: #fff; padding: 28px; border-radius: 14px; box-shadow: 0 3px 12px rgba(15, 23, 42, .06); }
+        .recommendation-block { background: #ecfdf3; border-left: 6px solid #16a34a; }
+        .recommendation-block h2 { color: #166534; margin-bottom: 8px; }
+        .recommendation { margin: 0 0 14px; color: #14532d; font-size: 30px; font-weight: 800; }
+        .executive-summary { margin: 20px 0 0; font-size: 17px; }
+        h2 { margin: 0 0 14px; color: #111827; }
+        .two-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; margin-top: 20px; }
+        .two-columns h3 { margin: 0 0 8px; font-size: 16px; }
+        .two-columns ul { margin: 0; padding-left: 20px; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; min-width: 900px; border-collapse: collapse; margin-top: 18px; }
+        th { padding: 12px; text-align: left; background: #f1f5f9; color: #334155; font-size: 13px; }
+        td { padding: 14px 12px; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+        tbody tr:nth-child(even) { background: #fafafa; }
+        .winner-row { background: #f0fdf4 !important; }
+        .badge { display: inline-block; margin-left: 7px; padding: 3px 7px; border-radius: 999px; background: #dcfce7; color: #166534; font-size: 10px; font-weight: 700; }
+        .note { margin-top: 16px; padding: 14px 16px; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 14px; }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { position: relative; background: #fff; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+        .winner-card { border: 2px solid #22c55e; }
+        .winner-label { position: absolute; top: -12px; right: 16px; padding: 5px 10px; border-radius: 999px; background: #16a34a; color: #fff; font-size: 11px; font-weight: 700; }
+        .card h3 { margin: 3px 0 18px; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .metric-box { padding: 13px; background: #f8fafc; border-radius: 8px; }
+        .observation { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid #e5e7eb; color: #475569; }
+        .chart-section { background: #fff; padding: 8px 0 0; }
+        .chart-header { text-align: center; margin-bottom: 20px; }
+        .chart-header h2 { margin-bottom: 7px; }
+        .chart-header p { margin: 0; color: #64748b; }
+        .chart-container { position: relative; height: 420px; }
+        .chart-note { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 16px; color: #475569; font-size: 14px; }
+        .winner-indicator { width: 10px; height: 10px; border-radius: 50%; background: #16a34a; }
+        .footer { margin-top: 44px; padding-top: 22px; border-top: 1px solid #d1d5db; text-align: center; color: #64748b; font-size: 13px; }
+        @media (max-width: 600px) {
+            .container { padding: 24px 14px 50px; }
+            .section-box { padding: 20px; }
+            .report-header h1 { font-size: 27px; }
+            .recommendation { font-size: 24px; }
+            .metrics-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <header class="report-header">
+        <h1>Análise de Teste A/B de Cashback</h1>
+        <p class="subtitle">Decisão determinística de Growth e sustentabilidade econômica</p>
+        <div class="report-info">
+            <div class="info-item"><span class="info-label">Parceiro</span><span class="info-value">Parceiro C</span></div>
+            <div class="info-item"><span class="info-label">Período</span><span class="info-value">01/07/2011 a 14/08/2011</span></div>
+            <div class="info-item"><span class="info-label">Variantes</span><span class="info-value">2</span></div>
+            <div class="info-item"><span class="info-label">Gerado em</span><span class="info-value">14/07/2026 às 23:31</span></div>
+        </div>
+    </header>
+
+    <section class="section-box recommendation-block">
+        <h2>Recomendação</h2>
+        <p class="recommendation">Escalar Grupo 1</p>
+        <div class="decision-grid">
+            <div class="decision-item"><span class="info-label">Cashback efetivo</span><span class="info-value">5.00%</span></div>
+            <div class="decision-item"><span class="info-label">Decisão</span><span class="info-value">Incentivo ineficiente</span></div>
+            <div class="decision-item"><span class="info-label">Confiança</span><span class="info-value">Alta</span></div>
+            <div class="decision-item"><span class="info-label">Variante baseline</span><span class="info-value">Grupo 1</span></div>
+        </div>
+        <p class="executive-summary">Grupo 2 exigiu cashback efetivo maior, sem ganho material de compradores, e ainda reduziu o valor líquido. O incentivo é ineficiente; por isso, Grupo 1 é recomendado.</p>
+        <div class="two-columns">
+            <div><h3>Razões</h3><ul><li>Variação de compradores de -0.6%.</li><li>Variação de valor líquido de -100.0%.</li></ul></div>
+            <div><h3>Trade-offs</h3><ul><li>Um incentivo maior não produziu resposta adicional suficiente.</li></ul></div>
+        </div>
+    </section>
+
+    <section class="section-box">
+        <h2>Growth vs Resultado Econômico</h2>
+        <p>A variante baseline é o grupo com a menor taxa efetiva de cashback; ela não é necessariamente um controle estatístico.</p>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Grupo</th><th>Cashback efetivo</th><th>Compradores</th><th>Uplift de compradores</th><th>Valor líquido</th><th>Variação do valor líquido</th><th>Valor líquido / comprador</th></tr></thead>
+                <tbody>
+            <tr class="winner-row">
+                <td><strong>Grupo 1</strong><span class="badge">Recomendado</span></td>
+                <td>5.00%</td>
+                <td>4.549</td>
+                <td>Baseline</td>
+                <td>R$ 34.769,00</td>
+                <td>Baseline</td>
+                <td>R$ 7,64</td>
+            </tr>
+        
+            <tr>
+                <td><strong>Grupo 2</strong></td>
+                <td>7.00%</td>
+                <td>4.522</td>
+                <td>-0.59%</td>
+                <td>R$ 0,00</td>
+                <td>-100.00%</td>
+                <td>R$ 0,00</td>
+            </tr>
+        </tbody>
+            </table>
+        </div>
+        <p class="note"><strong>Limitação:</strong> o dataset não contém usuários expostos nem alocação de tráfego. Por isso, não é possível calcular conversão real. Compradores representa a resposta de Growth observada. A decisão usa resultados agregados e regras determinísticas, sem inferência de significância estatística.</p>
+    </section>
+
+    <section class="section-box">
+        
+    <section class="chart-section">
+
+        <div class="chart-header">
+            <h2>Comparação Visual</h2>
+
+            <p>
+                Comparação relativa dos principais indicadores entre
+                as variantes. 
+            </p>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="comparisonChart"></canvas>
+        </div>
+
+        <div class="chart-note">
+            <span class="winner-indicator"></span>
+            <strong>Grupo 1</strong> é o grupo recomendado.
+        </div>
+
+    </section>
+
+    <script>
+        const grupos = ["Grupo 1", "Grupo 2"];
+        const recommendedGroup = "Grupo 1";
+        const rawData = {"Grupo 1": {"compradores": 4549, "valor_liquido": 34769.0, "valor_liquido_por_comprador": 7.64}, "Grupo 2": {"compradores": 4522, "valor_liquido": 0.0, "valor_liquido_por_comprador": 0.0}};
+
+        const comparisonChart = new Chart(
+            document.getElementById("comparisonChart"),
+            {
+                type: "bar",
+
+                data: {
+                    labels: grupos,
+                    datasets: [{"label": "Compradores", "data": [100.0, 99.41], "backgroundColor": "#2563eb", "borderColor": ["#16a34a", "#2563eb"], "borderWidth": [3, 0], "borderRadius": 6, "borderSkipped": false}, {"label": "Valor Líquido", "data": [100.0, 0.0], "backgroundColor": "#f59e0b", "borderColor": ["#16a34a", "#f59e0b"], "borderWidth": [3, 0], "borderRadius": 6, "borderSkipped": false}, {"label": "Líquido por Comprador", "data": [100.0, 0.0], "backgroundColor": "#7c3aed", "borderColor": ["#16a34a", "#7c3aed"], "borderWidth": [3, 0], "borderRadius": 6, "borderSkipped": false}]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    interaction: {
+                        mode: "index",
+                        intersect: false
+                    },
+
+                    plugins: {
+
+                        legend: {
+                            position: "top",
+
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: "rectRounded",
+                                padding: 20,
+
+                                font: {
+                                    size: 13
+                                }
+                            }
+                        },
+
+                        tooltip: {
+                            callbacks: {
+
+                                title: function(context) {
+                                    const grupo = context[0].label;
+
+                                    if (grupo === recommendedGroup) {
+                                        return grupo + " — Recomendado";
+                                    }
+
+                                    return grupo;
+                                },
+
+                                label: function(context) {
+                                    const grupo = context.label;
+                                    const datasetLabel =
+                                        context.dataset.label;
+
+                                    let realValue;
+
+                                    if (
+                                        datasetLabel === "Compradores"
+                                    ) {
+                                        realValue =
+                                            rawData[grupo]
+                                                .compradores
+                                                .toLocaleString(
+                                                    "pt-BR"
+                                                );
+
+                                        return (
+                                            datasetLabel +
+                                            ": " +
+                                            realValue +
+                                            " compradores" +
+                                            " (" +
+                                            context.raw +
+                                            "% relativo)"
+                                        );
+                                    }
+
+                                    if (
+                                        datasetLabel ===
+                                        "Valor Líquido"
+                                    ) {
+                                        realValue =
+                                            rawData[grupo]
+                                                .valor_liquido
+                                                .toLocaleString(
+                                                    "pt-BR",
+                                                    {
+                                                        style: "currency",
+                                                        currency: "BRL"
+                                                    }
+                                                );
+
+                                        return (
+                                            datasetLabel +
+                                            ": " +
+                                            realValue +
+                                            " (" +
+                                            context.raw +
+                                            "% relativo)"
+                                        );
+                                    }
+
+                                    if (
+                                        datasetLabel ===
+                                        "Líquido por Comprador"
+                                    ) {
+                                        realValue =
+                                            rawData[grupo]
+                                                .valor_liquido_por_comprador
+                                                .toLocaleString(
+                                                    "pt-BR",
+                                                    {
+                                                        style: "currency",
+                                                        currency: "BRL"
+                                                    }
+                                                );
+
+                                        return (
+                                            datasetLabel +
+                                            ": " +
+                                            realValue +
+                                            " (" +
+                                            context.raw +
+                                            "% relativo)"
+                                        );
+                                    }
+
+                                    return datasetLabel;
+                                }
+                            }
+                        }
+                    },
+
+                    scales: {
+
+                        x: {
+                            offset: true,
+
+                            grid: {
+                                display: false
+                            },
+
+                            ticks: {
+                                color: function(context) {
+                                    const grupo =
+                                        grupos[context.index];
+
+                                    return grupo === recommendedGroup
+                                        ? "#16a34a"
+                                        : "#475569";
+                                },
+
+                                font: function(context) {
+                                    const grupo =
+                                        grupos[context.index];
+
+                                    return {
+                                        size: 13,
+                                        weight:
+                                            grupo === recommendedGroup
+                                                ? "bold"
+                                                : "normal"
+                                    };
+                                }
+                            }
+                        },
+
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: 110,
+
+                            title: {
+                                display: true,
+                                text: "Performance relativa"
+                            },
+
+                            ticks: {
+                                callback: function(value) {
+                                    return value + "%";
+                                }
+                            },
+
+                            grid: {
+                                color:
+                                    "rgba(148, 163, 184, 0.18)"
+                            }
+                        }
+                    }
+                }
+            }
+        );
+    </script>
+    
+    </section>
+
+    <section>
+        <h2>Detalhamento por Grupo</h2>
+        <div class="cards-grid">
+            <article class="card winner-card">
+                <div class="winner-label">Variante recomendada</div>
+                <h3>Grupo 1</h3>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-label">Cashback efetivo</span>
+                        <span class="metric-value">5.00%</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Compradores</span>
+                        <span class="metric-value">4.549</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Valor líquido</span>
+                        <span class="metric-value">R$ 34.769,00</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Valor líquido / comprador</span>
+                        <span class="metric-value">R$ 7,64</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Vendas totais</span>
+                        <span class="metric-value">R$ 1.738.460,00</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Vendas / comprador</span>
+                        <span class="metric-value">R$ 382,16</span>
+                    </div>
+                </div>
+                <p class="observation">Variante baseline de menor cashback efetivo, maior valor líquido, maior volume de compradores, maior valor líquido por comprador.</p>
+            </article>
+        
+            <article class="card">
+                
+                <h3>Grupo 2</h3>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-label">Cashback efetivo</span>
+                        <span class="metric-value">7.00%</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Compradores</span>
+                        <span class="metric-value">4.522</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Valor líquido</span>
+                        <span class="metric-value">R$ 0,00</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Valor líquido / comprador</span>
+                        <span class="metric-value">R$ 0,00</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Vendas totais</span>
+                        <span class="metric-value">R$ 1.685.235,00</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Vendas / comprador</span>
+                        <span class="metric-value">R$ 372,67</span>
+                    </div>
+                </div>
+                <p class="observation">Desempenho intermediário entre as variantes analisadas.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="section-box">
+        <h2>Conclusão</h2>
+        <p>Grupo 2 exigiu cashback efetivo maior, sem ganho material de compradores, e ainda reduziu o valor líquido. O incentivo é ineficiente; por isso, Grupo 1 é recomendado.</p>
+        <p>Esta recomendação compara os resultados observados e não deve ser interpretada automaticamente como projeção linear para 100% do tráfego.</p>
+    </section>
+
+    <footer class="footer">Growth Strategy Analyzer<br>Relatório gerado automaticamente em 14/07/2026 às 23:31</footer>
+</main>
+</body>
+</html>
