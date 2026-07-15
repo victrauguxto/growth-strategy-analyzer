@@ -69,17 +69,32 @@ def format_test_result(
     description: str,
     recommendation: dict,
 ) -> list[str]:
+    recommended_group = recommendation.get(
+        "recommended_group",
+        recommendation.get("grupo"),
+    )
+    decision_label = recommendation.get(
+        "decision_label",
+        recommendation.get("decision_type", "Decisão determinística"),
+    )
+    result_summary = recommendation.get(
+        "summary",
+        recommendation.get("justificativa", "Resultado não informado."),
+    )
+    decision_text = (
+        f"Escalar {recommended_group} — {decision_label}"
+        if recommended_group
+        else f"Sem recomendação — {decision_label}"
+    )
+
     return [
         test_name,
         datetime.now().strftime(
             "%d/%m/%Y %H:%M:%S"
         ),
         description,
-        recommendation["justificativa"],
-        (
-            "Recomenda-se utilizar o "
-            f"{recommendation['grupo']}."
-        ),
+        result_summary,
+        decision_text,
     ]
 
 

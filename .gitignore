@@ -2,7 +2,7 @@ docs/
 data/*.csv
 .env
 data/processed/
-utils/__pycache__/
+__pycache__/
 report/report.html
 .gitignore
 reports/

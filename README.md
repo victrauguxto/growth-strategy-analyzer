@@ -8,17 +8,39 @@ Solução em Python para automatizar a análise de testes A/B de cashback do Mé
 Para cada CSV encontrado na pasta `input/`, a aplicação:
 
 1. converte datas e valores monetários para tipos adequados;
-2. calcula o percentual médio de cashback, total de compradores, valor líquido e valor líquido por comprador de cada grupo;
-3. recomenda a variante com o maior valor líquido total;
-4. gera um relatório HTML com resumo executivo, tabela comparativa, gráfico e detalhamento por grupo;
-5. registra a análise na primeira aba de uma planilha do Google Sheets;
-6. adiciona o resultado a um histórico CSV local, independentemente da configuração do Google Sheets.
+2. calcula taxas efetivas de cashback e comissão, compradores, vendas, valor líquido e indicadores por comprador de cada grupo;
+3. compara Growth e retorno econômico por meio de regras determinísticas e explicáveis;
+4. recomenda a variante com o melhor equilíbrio sustentável dentro do teste;
+5. gera um relatório HTML com decisão executiva, trade-offs, tabela comparativa, gráfico e detalhamento por grupo;
+6. registra a análise na primeira aba de uma planilha do Google Sheets;
+7. adiciona o resultado a um histórico CSV local, independentemente da configuração do Google Sheets.
 
 O valor líquido usado na decisão é calculado por:
 
 ```text
 valor líquido = comissão - cashback
 ```
+
+As taxas consolidadas usam a razão entre os totais, e não a média simples dos percentuais diários:
+
+```text
+cashback efetivo = cashback total / vendas totais
+comissão efetiva = comissão total / vendas totais
+```
+
+## Decisões de arquitetura
+
+A solução foi construída de forma determinística e sem dependência obrigatória de IA.
+
+A análise e a recomendação são feitas em Python para garantir:
+
+- reprodutibilidade;
+- transparência;
+- facilidade de teste;
+- independência de fornecedor de LLM.
+
+A arquitetura permite que ferramentas como Claude Code, Cursor ou ChatGPT
+acionem o pipeline posteriormente, sem alterar o motor analítico.
 
 ## Pré-requisitos
 
@@ -166,11 +188,31 @@ python main.py
 Exemplo de saída no terminal:
 
 ```text
-Processing arquivo: dataset_01_parceiroA.csv
-Relatório gerado em: .../output/dataset_01_parceiroA_report.html
-Google Sheets não configurado. Resultado mantido em: data/test_results/test_results.csv
-Processamento finalizado. 1 arquivo(s) processado(s).
+Processed: dataset_01_parceiroA.csv
+
+Recommendation: Grupo 1
+Decision: Growth economicamente caro
+Confidence: High
+
+Growth trade-off vs baseline:
+Evaluated variant: Grupo 3
+Buyers: +18.45%
+Net value: -34.70%
+Effective cashback: +3.26 pp
+
+Report saved at:
+C:\...\growth-strategy-analyzer\output\dataset_01_parceiroA_report.html
+Open report:
+file:///C:/.../growth-strategy-analyzer/output/dataset_01_parceiroA_report.html
 ```
+
+O endereço `file:///` é clicável em terminais modernos. Para também abrir os relatórios automaticamente no navegador, use:
+
+```bash
+python main.py --open-report
+```
+
+Sem a opção, nenhum navegador é aberto automaticamente.
 
 ### 4. Consulte os resultados
 
@@ -183,8 +225,10 @@ output/<nome_do_dataset>_report.html
 Abra o arquivo HTML em um navegador. Cada relatório contém:
 
 - resumo executivo do teste;
-- variante recomendada e justificativa;
-- comparação dos KPIs por grupo;
+- variante recomendada, tipo de decisão e confiança;
+- comparação entre resposta de compradores e resultado econômico;
+- uplift de compradores e variação de valor líquido contra a baseline;
+- comparação dos KPIs consolidados por grupo;
 - gráfico de performance relativa;
 - detalhamento e observações por variante.
 
@@ -207,25 +251,57 @@ growth-strategy-analyzer/
 ├── output/                    # Relatórios HTML gerados
 ├── data/test_results/         # Histórico CSV cumulativo das execuções
 ├── credentials/               # Chaves locais do Google (não versionadas)
-└── utils/
+├── utils/
     ├── csv_reader.py           # Leitura, tratamento e cálculo dos KPIs
+    ├── decision_engine.py      # Regras determinísticas de decisão
     ├── graph_builder.py        # Gráfico interativo em Chart.js
-    ├── html_generator.py       # Recomendação e geração do relatório
+    ├── html_generator.py       # Geração do relatório executivo
     └── sheets_client.py        # Persistência no Sheets ou em CSV
+└── tests/                     # Cenários de validação do motor e outputs
 ```
 
 ## Critério de recomendação
 
-A variante recomendada é aquela com o maior **valor líquido total** no período. Se ela também tiver o maior valor líquido por comprador, essa informação é incluída na justificativa.
+Cada dataset é analisado isoladamente. Parceiros diferentes nunca são comparados entre si.
+
+O motor usa como **variante baseline** o grupo com a menor taxa efetiva de cashback. Essa baseline não é chamada de controle, pois o dataset não identifica formalmente um grupo de controle.
+
+O sistema identifica:
+
+- vencedor econômico: maior valor líquido;
+- vencedor de Growth: maior número de compradores;
+- vencedor de eficiência: maior valor líquido por comprador.
+
+A decisão segue regras explícitas:
+
+1. recomenda uma variante que lidere simultaneamente compradores e valor líquido;
+2. em resultados praticamente empatados, prefere menor cashback e maior eficiência;
+3. pode aceitar uma variante de Growth com pelo menos 5% mais compradores quando a perda de valor líquido não ultrapassa 10% e é proporcionalmente menor que o ganho de compradores;
+4. rejeita Growth quando a perda econômica acima de 10% é desproporcional ao uplift;
+5. rejeita cashback maior quando ele não produz ganho material de compradores e reduz o valor líquido;
+6. nos demais casos, preserva o vencedor econômico.
+
+O motor retorna uma confiança determinística `high`, `medium` ou `low`, além do resumo, razões, trade-offs e comparações contra a baseline.
 
 Os principais indicadores apresentados são:
 
-- percentual médio de cashback sobre as vendas;
+- percentual efetivo de cashback e comissão sobre as vendas;
 - total de compradores;
+- vendas totais e vendas por comprador;
 - valor líquido total;
 - valor líquido por comprador.
 
-O relatório compara os resultados observados. Ele não calcula significância estatística e a recomendação não deve ser interpretada automaticamente como uma projeção linear para 100% do tráfego.
+O dataset não informa usuários expostos nem alocação de tráfego. Portanto, compradores é tratado como resposta observada de Growth, e não como taxa de conversão. O relatório não calcula significância estatística; a decisão usa resultados agregados e regras de negócio reproduzíveis. A recomendação não deve ser interpretada automaticamente como uma projeção linear para 100% do tráfego.
+
+## Testes automatizados
+
+Execute os cenários de validação com:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+A suíte cobre taxas efetivas consolidadas, vencedor dominante, Growth equilibrado, Growth economicamente caro, incentivo ineficiente, desempate por eficiência, datasets insuficientes, relatório HTML, histórico CSV e formato compatível com Google Sheets.
 
 ## Solução de problemas
 

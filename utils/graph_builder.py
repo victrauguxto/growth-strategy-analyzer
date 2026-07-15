@@ -1,7 +1,7 @@
 import json
 
 
-def graph_builder(kpis: dict, recommended_group: str) -> str:
+def graph_builder(kpis: dict, recommended_group: str | None) -> str:
     """
     Gera o HTML/JavaScript de um gráfico de barras agrupadas usando Chart.js.
 
@@ -107,6 +107,12 @@ def graph_builder(kpis: dict, recommended_group: str) -> str:
         ensure_ascii=False
     )
 
+    recommendation_note = (
+        f"<strong>{recommended_group}</strong> é o grupo recomendado."
+        if recommended_group
+        else "Não há recomendação por falta de variantes suficientes."
+    )
+
     # Dados reais para mostrar no tooltip
     raw_data = {
         grupo: {
@@ -141,8 +147,7 @@ def graph_builder(kpis: dict, recommended_group: str) -> str:
 
         <div class="chart-note">
             <span class="winner-indicator"></span>
-            <strong>{recommended_group}</strong>
-            é o grupo recomendado.
+            {recommendation_note}
         </div>
 
     </section>
