@@ -257,7 +257,6 @@ growth-strategy-analyzer/
 │   ├── graph_builder.py       # Interactive Chart.js chart
 │   ├── html_generator.py      # Executive report generation
 │   └── sheets_client.py       # Persistence to Sheets or CSV
-└── tests/                     # Validation scenarios for the engine and outputs
 ```
 
 ## Recommendation criteria
@@ -292,16 +291,6 @@ The main indicators shown are:
 - net value per buyer.
 
 The dataset does not include exposed users or traffic allocation. Buyers are therefore treated as the observed growth response, not as a conversion rate. The report does not compute statistical significance; the decision uses aggregated results and reproducible business rules. The recommendation should not be read as a linear projection to 100% of traffic.
-
-## Automated tests
-
-Run the validation scenarios with:
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-The suite covers consolidated effective rates, a dominant winner, balanced growth, economically expensive growth, inefficient incentives, efficiency tie-breaking, insufficient datasets, the HTML report, the CSV history and the Google Sheets-compatible format.
 
 ## Troubleshooting
 
