@@ -1,96 +1,96 @@
 # Growth Strategy Analyzer
 
-Solução em Python para automatizar a análise de testes A/B de cashback do Méliuz. A aplicação lê um ou mais datasets, consolida os principais indicadores por variante, recomenda qual grupo deve ser escalado e gera um relatório HTML apresentável. Ao final, mantém um histórico CSV local e, quando as credenciais estão configuradas, registra o resultado diretamente na planilha indicada pelo `.env`.
+A Python tool that automates the analysis of Méliuz cashback A/B tests. It reads one or more datasets, consolidates the key indicators per variant, recommends which group to scale and generates a presentable HTML report. It also keeps a local CSV history and, when credentials are configured, logs the result directly to the spreadsheet set in `.env`.
 
+> The datasets and the user-facing labels in the report and in the spreadsheet are in Portuguese, as in the original take-home assignment.
 
-## O que a aplicação faz
+## What it does
 
-Para cada CSV encontrado na pasta `input/`, a aplicação:
+For each CSV in the `input/` folder, the application:
 
-1. converte datas e valores monetários para tipos adequados;
-2. calcula taxas efetivas de cashback e comissão, compradores, vendas, valor líquido e indicadores por comprador de cada grupo;
-3. compara Growth e retorno econômico por meio de regras determinísticas e explicáveis;
-4. recomenda a variante com o melhor equilíbrio sustentável dentro do teste;
-5. gera um relatório HTML com decisão executiva, trade-offs, tabela comparativa, gráfico e detalhamento por grupo;
-6. registra a análise na primeira aba de uma planilha do Google Sheets;
-7. adiciona o resultado a um histórico CSV local, independentemente da configuração do Google Sheets.
+1. converts dates and currency values to proper types;
+2. computes effective cashback and commission rates, buyers, sales, net value and per-buyer indicators for each group;
+3. compares growth and economic return using deterministic, explainable rules;
+4. recommends the variant with the best sustainable balance within the test;
+5. generates an HTML report with the executive decision, trade-offs, a comparison table, a chart and a per-group breakdown;
+6. logs the analysis to the first tab of a Google Sheets spreadsheet;
+7. appends the result to a local CSV history, whether or not Google Sheets is configured.
 
-O valor líquido usado na decisão é calculado por:
-
-```text
-valor líquido = comissão - cashback
-```
-
-As taxas consolidadas usam a razão entre os totais, e não a média simples dos percentuais diários:
+Net value, used in the decision, is calculated as:
 
 ```text
-cashback efetivo = cashback total / vendas totais
-comissão efetiva = comissão total / vendas totais
+net value = commission - cashback
 ```
 
-## Decisões de arquitetura
+Consolidated rates use the ratio between totals, not the simple average of daily percentages:
 
-A solução foi construída de forma determinística e sem dependência obrigatória de IA.
+```text
+effective cashback = total cashback / total sales
+effective commission = total commission / total sales
+```
 
-A análise e a recomendação são feitas em Python para garantir:
+## Architecture decisions
 
-- reprodutibilidade;
-- transparência;
-- facilidade de teste;
-- independência de fornecedor de LLM.
+The solution is deterministic and has no mandatory AI dependency.
 
-A arquitetura permite que ferramentas como Claude Code, Cursor ou ChatGPT
-acionem o pipeline posteriormente, sem alterar o motor analítico.
+Analysis and recommendation run in Python to ensure:
 
-## Pré-requisitos
+- reproducibility;
+- transparency;
+- ease of testing;
+- independence from any LLM vendor.
+
+Tools such as Claude Code, Cursor or ChatGPT can trigger the pipeline later without changing the analytical engine.
+
+## Prerequisites
 
 - [Git](https://git-scm.com/)
-- Python 3.11 ou superior (Python 3.13 recomendado)
-- Acesso à internet para instalar as dependências
-- Acesso à internet ao abrir o relatório, pois os gráficos carregam o Chart.js por CDN
-- Opcional: uma conta Google Cloud e uma Service Account para registrar resultados no Google Sheets
+- Python 3.11 or later (Python 3.13 recommended)
+- Internet access to install dependencies
+- Internet access when opening the report, since charts load Chart.js from a CDN
+- Optional: a Google Cloud account and a Service Account to log results to Google Sheets
 
-## Como clonar e instalar
+## Clone and install
 
-Clone o repositório e entre na pasta do projeto:
+Clone the repository and enter the project folder:
 
 ```bash
 git clone https://github.com/victrauguxto/growth-strategy-analyzer.git
 cd growth-strategy-analyzer
 ```
 
-Crie um ambiente virtual:
+Create a virtual environment:
 
 ```bash
 python -m venv .venv
 ```
 
-Ative o ambiente virtual.
+Activate it.
 
-No Windows PowerShell:
+On Windows PowerShell:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-No Linux ou macOS:
+On Linux or macOS:
 
 ```bash
 source .venv/bin/activate
 ```
 
-Instale as dependências:
+Install the dependencies:
 
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-## Como usar
+## Usage
 
-### 1. Adicione os datasets
+### 1. Add the datasets
 
-Crie a pasta `input/`, caso ela ainda não exista, e coloque nela os arquivos que deseja analisar:
+Create the `input/` folder if it doesn't exist and put the files to analyze in it:
 
 ```text
 input/
@@ -99,93 +99,93 @@ input/
 └── dataset_03_parceiroC.csv
 ```
 
-O programa processa, em uma única execução, todos os arquivos cujo nome corresponde a `dataset*.csv`. Recomenda-se seguir o formato `dataset_XX_nomeDoParceiro.csv`, pois o nome exibido no relatório é obtido a partir do nome do arquivo.
+In a single run, the program processes every file matching `dataset*.csv`. Following the `dataset_XX_partnerName.csv` pattern is recommended, since the name shown in the report comes from the file name.
 
-Cada CSV deve estar em UTF-8, usar vírgula como separador e conter exatamente estas colunas:
+Each CSV must be UTF-8, comma-separated and contain exactly these columns (the column names are in Portuguese and must match exactly):
 
-| Coluna | Tipo esperado | Descrição |
+| Column | Expected type | Description |
 | --- | --- | --- |
-| `Data` | `YYYY-MM-DD` | Data da observação |
-| `Grupos de usuários` | texto | Variante do teste, como `Grupo 1` |
-| `Parceiro` | texto | Parceiro analisado |
-| `compradores` | inteiro | Usuários únicos que compraram no dia |
-| `comissão` | moeda em reais | Comissão paga pelo parceiro ao Méliuz |
-| `cashback` | moeda em reais | Cashback distribuído aos usuários |
-| `vendas totais` | moeda em reais | GMV do dia |
+| `Data` | `YYYY-MM-DD` | Observation date |
+| `Grupos de usuários` | text | Test variant, such as `Grupo 1` |
+| `Parceiro` | text | Partner being analyzed |
+| `compradores` | integer | Unique users who bought that day |
+| `comissão` | BRL amount | Commission paid by the partner to Méliuz |
+| `cashback` | BRL amount | Cashback paid out to users |
+| `vendas totais` | BRL amount | GMV for the day |
 
-Exemplo:
+Example:
 
 ```csv
 Data,Grupos de usuários,Parceiro,compradores,comissão,cashback,vendas totais
 2011-01-01,Grupo 1,Parceiro A,196,R$ 10.273,R$ 3.267,R$ 93.390
 ```
 
-Os valores monetários devem seguir o padrão brasileiro aceito pelo projeto, como `R$ 10.273` ou `R$ 10.273,50`.
+Currency values must follow the Brazilian format the project accepts, such as `R$ 10.273` or `R$ 10.273,50`.
 
-### 2. Configure o registro dos resultados
+### 2. Configure result logging
 
-A forma recomendada de usar o projeto é registrar cada análise diretamente no Google Sheets. O arquivo `.env.example` já contém o link da planilha original de acompanhamento, que pode ser acessado em: https://docs.google.com/spreadsheets/d/1zpI995GmocupeSbYQv2i5GeHXnf2U1fyVpIWSK7aPVM/edit?usp=sharing. Para habilitar a integração, basta fornecer uma chave JSON de Service Account com acesso de edição a essa planilha e configurar o caminho da chave no `.env`.
+The recommended way to use the project is to log each analysis directly to Google Sheets. The `.env.example` file already contains the link to the original tracking spreadsheet: https://docs.google.com/spreadsheets/d/1zpI995GmocupeSbYQv2i5GeHXnf2U1fyVpIWSK7aPVM/edit?usp=sharing. To enable the integration, provide a Service Account JSON key with edit access to that spreadsheet and set the key's path in `.env`.
 
-Independentemente da integração, cada análise também é adicionada ao histórico local `data/test_results/test_results.csv`.
+Regardless of the integration, each analysis is also appended to the local history at `data/test_results/test_results.csv`.
 
-#### Opção recomendada: escrever na planilha original
+#### Recommended: write to the original spreadsheet
 
-1. Coloque o arquivo JSON de credenciais da Service Account na pasta `credentials/`. Por exemplo:
+1. Put the Service Account JSON credentials file in the `credentials/` folder. For example:
 
    ```text
    credentials/credenciais-google.json
    ```
 
-2. Copie o arquivo de configuração de exemplo.
+2. Copy the example configuration file.
 
-   No Windows PowerShell:
+   On Windows PowerShell:
 
    ```powershell
    Copy-Item .env.example .env
    ```
 
-   No Linux ou macOS:
+   On Linux or macOS:
 
    ```bash
    cp .env.example .env
    ```
 
-3. No `.env`, substitua somente o valor de `GOOGLE_APPLICATION_CREDENTIALS` pelo caminho do arquivo JSON. Mantenha `GOOGLE_SHEETS_SPREADSHEET_URL` com o link que já veio no `.env.example`:
+3. In `.env`, replace only the value of `GOOGLE_APPLICATION_CREDENTIALS` with the path to the JSON file. Keep `GOOGLE_SHEETS_SPREADSHEET_URL` with the link that came in `.env.example`:
 
    ```dotenv
    GOOGLE_APPLICATION_CREDENTIALS=credentials/credenciais-google.json
-   GOOGLE_SHEETS_SPREADSHEET_URL=<link já fornecido no .env.example>
+   GOOGLE_SHEETS_SPREADSHEET_URL=<link already provided in .env.example>
    ```
 
-4. Confirme que o e-mail do campo `client_email` da chave JSON possui permissão de edição na planilha.
+4. Make sure the e-mail in the key's `client_email` field has edit permission on the spreadsheet.
 
-5. Execute `python main.py`. Para cada dataset processado, o sistema adicionará uma nova linha à primeira aba da planilha indicada em `GOOGLE_SHEETS_SPREADSHEET_URL`.
+5. Run `python main.py`. For each processed dataset, the system appends a new row to the first tab of the spreadsheet set in `GOOGLE_SHEETS_SPREADSHEET_URL`.
 
-A primeira aba deve conter estes cabeçalhos:
+The first tab must contain these headers (in Portuguese):
 
 ```text
 Nome do teste | Data / Hora Execução | Descrição | Resultado | Decisão tomada
 ```
 
-Se quiser usar outra planilha, substitua `GOOGLE_SHEETS_SPREADSHEET_URL`, compartilhe a nova planilha com o `client_email` da Service Account e mantenha os mesmos cabeçalhos.
+To use another spreadsheet, replace `GOOGLE_SHEETS_SPREADSHEET_URL`, share the new spreadsheet with the Service Account's `client_email` and keep the same headers.
 
-Para criar credenciais próprias, crie uma Service Account no Google Cloud e habilite as APIs Google Sheets e Google Drive. A chave precisa estar no formato JSON.
+To create your own credentials, create a Service Account in Google Cloud and enable the Google Sheets and Google Drive APIs. The key must be in JSON format.
 
-Nunca publique o `.env` nem a chave JSON da Service Account. A pasta `credentials/`, o `.env` e os arquivos JSON estão configurados para não serem versionados pelo Git.
+Never publish `.env` or the Service Account JSON key. The `credentials/` folder, `.env` and JSON files are excluded from Git.
 
-#### Opção alternativa: usar somente o CSV local
+#### Alternative: local CSV only
 
-Não é necessário criar um arquivo `.env`. Execute diretamente a aplicação e o histórico CSV será criado automaticamente. As próximas execuções acrescentam novas linhas ao mesmo arquivo, sem apagar os resultados anteriores.
+No `.env` file is needed. Run the application and the CSV history is created automatically. Later runs append new rows to the same file without deleting previous results.
 
-### 3. Execute a análise
+### 3. Run the analysis
 
-Na raiz do projeto, com o ambiente virtual ativo, execute:
+From the project root, with the virtual environment active, run:
 
 ```bash
 python main.py
 ```
 
-Exemplo de saída no terminal:
+Example terminal output:
 
 ```text
 Processed: dataset_01_parceiroA.csv
@@ -206,123 +206,123 @@ Open report:
 file:///C:/.../growth-strategy-analyzer/output/dataset_01_parceiroA_report.html
 ```
 
-O endereço `file:///` é clicável em terminais modernos. Para também abrir os relatórios automaticamente no navegador, use:
+The `file:///` address is clickable in modern terminals. To also open the reports automatically in the browser, use:
 
 ```bash
 python main.py --open-report
 ```
 
-Sem a opção, nenhum navegador é aberto automaticamente.
+Without the flag, no browser is opened.
 
-### 4. Consulte os resultados
+### 4. Check the results
 
-Os relatórios são gravados em:
+Reports are written to:
 
 ```text
-output/<nome_do_dataset>_report.html
+output/<dataset_name>_report.html
 ```
 
-Abra o arquivo HTML em um navegador. Cada relatório contém:
+Open the HTML file in a browser. Each report contains:
 
-- resumo executivo do teste;
-- variante recomendada, tipo de decisão e confiança;
-- comparação entre resposta de compradores e resultado econômico;
-- uplift de compradores e variação de valor líquido contra a baseline;
-- comparação dos KPIs consolidados por grupo;
-- gráfico de performance relativa;
-- detalhamento e observações por variante.
+- an executive summary of the test;
+- the recommended variant, decision type and confidence;
+- a comparison between buyer response and economic result;
+- buyer uplift and net value change against the baseline;
+- a comparison of consolidated KPIs per group;
+- a relative performance chart;
+- a breakdown and notes per variant.
 
-Cada teste executado localmente acrescenta uma linha ao arquivo:
+Each locally run test appends a row to:
 
 ```text
 data/test_results/test_results.csv
 ```
 
-O cabeçalho é criado somente na primeira execução e os resultados anteriores são preservados. Quando o Google Sheets estiver configurado e acessível, a mesma linha também será adicionada à primeira aba da planilha; o histórico local continuará armazenado.
+The header is created only on the first run, and previous results are kept. When Google Sheets is configured and reachable, the same row is also appended to the first tab of the spreadsheet; the local history is still kept.
 
-## Estrutura do projeto
+## Project structure
 
 ```text
 growth-strategy-analyzer/
-├── main.py                    # Orquestra a análise de todos os datasets
-├── requirements.txt           # Dependências Python
-├── .env.example               # Exemplo de configuração do Google Sheets
-├── input/                     # CSVs que serão analisados
-├── output/                    # Relatórios HTML gerados
-├── data/test_results/         # Histórico CSV cumulativo das execuções
-├── credentials/               # Chaves locais do Google (não versionadas)
+├── main.py                    # Orchestrates the analysis of all datasets
+├── requirements.txt           # Python dependencies
+├── .env.example               # Example Google Sheets configuration
+├── input/                     # CSVs to analyze
+├── output/                    # Generated HTML reports
+├── data/test_results/         # Cumulative CSV history of runs
+├── credentials/               # Local Google keys (not versioned)
 ├── utils/
-    ├── csv_reader.py           # Leitura, tratamento e cálculo dos KPIs
-    ├── decision_engine.py      # Regras determinísticas de decisão
-    ├── graph_builder.py        # Gráfico interativo em Chart.js
-    ├── html_generator.py       # Geração do relatório executivo
-    └── sheets_client.py        # Persistência no Sheets ou em CSV
-└── tests/                     # Cenários de validação do motor e outputs
+│   ├── csv_reader.py          # Reading, cleaning and KPI calculation
+│   ├── decision_engine.py     # Deterministic decision rules
+│   ├── graph_builder.py       # Interactive Chart.js chart
+│   ├── html_generator.py      # Executive report generation
+│   └── sheets_client.py       # Persistence to Sheets or CSV
+└── tests/                     # Validation scenarios for the engine and outputs
 ```
 
-## Critério de recomendação
+## Recommendation criteria
 
-Cada dataset é analisado isoladamente. Parceiros diferentes nunca são comparados entre si.
+Each dataset is analyzed on its own. Different partners are never compared with each other.
 
-O motor usa como **variante baseline** o grupo com a menor taxa efetiva de cashback. Essa baseline não é chamada de controle, pois o dataset não identifica formalmente um grupo de controle.
+The engine uses as the **baseline variant** the group with the lowest effective cashback rate. It is not called a control, because the dataset does not formally identify a control group.
 
-O sistema identifica:
+The system identifies:
 
-- vencedor econômico: maior valor líquido;
-- vencedor de Growth: maior número de compradores;
-- vencedor de eficiência: maior valor líquido por comprador.
+- economic winner: highest net value;
+- growth winner: most buyers;
+- efficiency winner: highest net value per buyer.
 
-A decisão segue regras explícitas:
+The decision follows explicit rules:
 
-1. recomenda uma variante que lidere simultaneamente compradores e valor líquido;
-2. em resultados praticamente empatados, prefere menor cashback e maior eficiência;
-3. pode aceitar uma variante de Growth com pelo menos 5% mais compradores quando a perda de valor líquido não ultrapassa 10% e é proporcionalmente menor que o ganho de compradores;
-4. rejeita Growth quando a perda econômica acima de 10% é desproporcional ao uplift;
-5. rejeita cashback maior quando ele não produz ganho material de compradores e reduz o valor líquido;
-6. nos demais casos, preserva o vencedor econômico.
+1. recommend a variant that leads in both buyers and net value;
+2. when results are practically tied, prefer lower cashback and higher efficiency;
+3. accept a growth variant with at least 5% more buyers when the net value loss does not exceed 10% and is proportionally smaller than the buyer gain;
+4. reject growth when an economic loss above 10% is disproportionate to the uplift;
+5. reject higher cashback when it produces no material buyer gain and reduces net value;
+6. otherwise, keep the economic winner.
 
-O motor retorna uma confiança determinística `high`, `medium` ou `low`, além do resumo, razões, trade-offs e comparações contra a baseline.
+The engine returns a deterministic confidence of `high`, `medium` or `low`, along with the summary, reasons, trade-offs and comparisons against the baseline.
 
-Os principais indicadores apresentados são:
+The main indicators shown are:
 
-- percentual efetivo de cashback e comissão sobre as vendas;
-- total de compradores;
-- vendas totais e vendas por comprador;
-- valor líquido total;
-- valor líquido por comprador.
+- effective cashback and commission rates over sales;
+- total buyers;
+- total sales and sales per buyer;
+- total net value;
+- net value per buyer.
 
-O dataset não informa usuários expostos nem alocação de tráfego. Portanto, compradores é tratado como resposta observada de Growth, e não como taxa de conversão. O relatório não calcula significância estatística; a decisão usa resultados agregados e regras de negócio reproduzíveis. A recomendação não deve ser interpretada automaticamente como uma projeção linear para 100% do tráfego.
+The dataset does not include exposed users or traffic allocation. Buyers are therefore treated as the observed growth response, not as a conversion rate. The report does not compute statistical significance; the decision uses aggregated results and reproducible business rules. The recommendation should not be read as a linear projection to 100% of traffic.
 
-## Testes automatizados
+## Automated tests
 
-Execute os cenários de validação com:
+Run the validation scenarios with:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-A suíte cobre taxas efetivas consolidadas, vencedor dominante, Growth equilibrado, Growth economicamente caro, incentivo ineficiente, desempate por eficiência, datasets insuficientes, relatório HTML, histórico CSV e formato compatível com Google Sheets.
+The suite covers consolidated effective rates, a dominant winner, balanced growth, economically expensive growth, inefficient incentives, efficiency tie-breaking, insufficient datasets, the HTML report, the CSV history and the Google Sheets-compatible format.
 
-## Solução de problemas
+## Troubleshooting
 
-### Nenhum CSV foi encontrado
+### No CSV was found
 
-Confirme que os arquivos estão na pasta `input/`, começam com `dataset` e terminam com `.csv`.
+Make sure the files are in the `input/` folder, start with `dataset` and end with `.csv`.
 
-### Erro ao ler as colunas
+### Error reading the columns
 
-Verifique a codificação UTF-8, o separador por vírgulas e os nomes exatos descritos na seção de schema. Acentos fazem parte dos nomes esperados.
+Check the UTF-8 encoding, the comma separator and the exact column names in the schema section. Accents are part of the expected names.
 
-### O resultado não foi enviado ao Sheets
+### The result was not sent to Sheets
 
-A aplicação preserva automaticamente o resultado no histórico CSV local. Verifique:
+The application automatically keeps the result in the local CSV history. Check:
 
-- as duas variáveis do `.env`;
-- o caminho para a chave JSON;
-- se a planilha foi compartilhada com o `client_email` da Service Account;
-- se as APIs Google Sheets e Google Drive estão habilitadas;
-- se a Service Account possui permissão de edição.
+- both `.env` variables;
+- the path to the JSON key;
+- whether the spreadsheet was shared with the Service Account's `client_email`;
+- whether the Google Sheets and Google Drive APIs are enabled;
+- whether the Service Account has edit permission.
 
-### O gráfico não aparece no relatório
+### The chart doesn't show in the report
 
-Conecte-se à internet ao abrir o HTML, pois o Chart.js é carregado de `cdn.jsdelivr.net`.
+Connect to the internet when opening the HTML, since Chart.js is loaded from `cdn.jsdelivr.net`.
